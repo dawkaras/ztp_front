@@ -1,16 +1,21 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+import { string, func } from 'prop-types';
 
 import Button from 'react-bootstrap/Button';
 
-const ButtonComp = ({ text }) => (
-  <Button color="primary" type="submit">
+const ButtonComp = ({ text, onClick }) => (
+  <Button color="primary" type="submit" onClick={() => onClick()}>
     {text}
   </Button>
 );
 
 ButtonComp.propTypes = {
-  text: PropTypes.string.isRequired,
+  text: string.isRequired,
+  onClick: func,
+};
+
+ButtonComp.defaultProps = {
+  onClick: () => {},
 };
 
 export default ButtonComp;
