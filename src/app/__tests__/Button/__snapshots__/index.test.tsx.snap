@@ -1,0 +1,35 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders Button component 1`] = `
+<button
+  className="btn btn-primary"
+  color="primary"
+  disabled={false}
+  onClick={[Function]}
+  style={
+    Object {
+      "margin": "5px 0px",
+    }
+  }
+  type="submit"
+>
+  Test1
+</button>
+`;
+
+exports[`renders Button component 2`] = `
+<button
+  className="btn btn-primary"
+  color="primary"
+  disabled={false}
+  onClick={[Function]}
+  style={
+    Object {
+      "margin": "5px 0px",
+    }
+  }
+  type="submit"
+>
+  Test2
+</button>
+`;

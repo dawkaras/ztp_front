@@ -1,0 +1,100 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<App /> should render and match the snapshot 1`] = `
+<BrowserRouter>
+  <Helmet
+    defaultTitle="React Boilerplate"
+    defer={true}
+    encodeSpecialCharacters={true}
+    htmlAttributes={
+      Object {
+        "lang": undefined,
+      }
+    }
+    titleTemplate="%s - React Boilerplate"
+  >
+    <meta
+      content="A React Boilerplate application"
+      name="description"
+    />
+  </Helmet>
+  <NavBar />
+  <Switch>
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/register"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/login"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/movieReview/:id"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/movies"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/movie/:id"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/seriesReview/:id"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/series"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/series/:id"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/seasonReview/:id"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/seasons"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/season/:id"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/episodeReview/:id"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/episodes"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/episode/:id"
+    />
+    <Route
+      component={[Function]}
+    />
+  </Switch>
+  <Footer />
+  <Memo(l) />
+</BrowserRouter>
+`;
