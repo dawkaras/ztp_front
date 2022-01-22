@@ -73,9 +73,16 @@ export function SeasonsPage() {
             .catch(error => {
               alert(error);
             });
-        } else {
-          response.json().then(result => alert(result.message));
-        }
+        } else
+          response
+            .json()
+            .then(result =>
+              alert(
+                result.message +
+                  '\n' +
+                  'Pamiętaj, aby najpierw usunąć wszystkie recenzje sezonu oraz wszystkie odcinki!'
+              )
+            );
       })
       .catch(error => {
         alert(error);

@@ -24,6 +24,30 @@ export function MoviePage() {
   });
   const { id } = useParams<{ id: string }>();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const getMovie = id => {
+    let requestOptions = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + user.token,
+      },
+    };
+    fetch('https://localhost:5001/movie/' + id, requestOptions)
+      .then(response => {
+        if (response.ok) {
+          response.json().then(result => {
+            setMovie(result);
+            setLoading(false);
+          });
+        } else {
+          response.json().then(result => alert(result.message));
+        }
+      })
+      .catch(error => {
+        setLoading(false);
+        alert(error);
+      });
+  };
   useEffect(() => {
     if (user.role == null) history.push('/login');
     let requestOptions = {
@@ -47,21 +71,7 @@ export function MoviePage() {
         alert(error);
       });
     if (id !== '0') {
-      fetch('https://localhost:5001/movie/' + id, requestOptions)
-        .then(response => {
-          if (response.ok) {
-            response.json().then(result => {
-              setMovie(result);
-              setLoading(false);
-            });
-          } else {
-            response.json().then(result => alert(result.message));
-          }
-        })
-        .catch(error => {
-          setLoading(false);
-          alert(error);
-        });
+      getMovie(id);
     } else setLoading(false);
   }, [history, id, user.role, user.token]);
   const save = event => {
@@ -80,18 +90,15 @@ export function MoviePage() {
       },
       body: JSON.stringify(movie),
     };
-    setLoading(true);
     fetch('https://localhost:5001/movie', requestOptions)
       .then(response => {
         if (response.ok) {
-          event.target.reset();
-          setLoading(false);
+          if (id === '0') history.push('/movies');
         } else {
           response.json().then(result => alert(result.message));
         }
       })
       .catch(error => {
-        setLoading(false);
         alert(error);
       });
   };
@@ -106,29 +113,16 @@ export function MoviePage() {
     fetch('https://localhost:5001/movieReview?id=' + id, requestOptions)
       .then(response => {
         if (response.ok) {
-          let requestOptions = {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: 'Bearer ' + user.token,
-            },
-          };
-          fetch('https://localhost:5001/movie/' + movie.id, requestOptions)
-            .then(response => {
-              if (response.ok) {
-                response.json().then(result => {
-                  setMovie(result);
-                });
-              } else {
-                response.json().then(result => alert(result.message));
-              }
-            })
-            .catch(error => {
-              alert(error);
-            });
-        } else {
-          response.json().then(result => alert(result.message));
-        }
+          getMovie(movie.id);
+        } else
+          response
+            .json()
+            .then(result => alert(result.message))
+            .catch(err =>
+              alert(
+                'Nie możesz usunąć komentarza dodanego przez innego użytkownika!'
+              )
+            );
       })
       .catch(error => {
         alert(error);

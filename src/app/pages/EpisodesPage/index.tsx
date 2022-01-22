@@ -73,9 +73,16 @@ export function EpisodesPage() {
             .catch(error => {
               alert(error);
             });
-        } else {
-          response.json().then(result => alert(result.message));
-        }
+        } else
+          response
+            .json()
+            .then(result =>
+              alert(
+                result.message +
+                  '\n' +
+                  'Pamiętaj, aby najpierw usunąć wszystkie recenzje odcinka!'
+              )
+            );
       })
       .catch(error => {
         alert(error);

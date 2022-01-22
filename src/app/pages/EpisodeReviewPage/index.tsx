@@ -24,6 +24,7 @@ export const EpisodeReviewPage = props => {
     review: '',
     userId: '',
     episodeId: '',
+    userName: '',
   });
   useEffect(() => {
     if (user.role == null) history.push('/login');
@@ -70,10 +71,16 @@ export const EpisodeReviewPage = props => {
     fetch('https://localhost:5001/episodeReview', requestOptions)
       .then(response => {
         if (response.ok) {
-          event.target.reset();
-        } else {
-          response.json().then(result => alert(result.message));
-        }
+          if (id === '0') history.push('/episode/' + review.episodeId);
+        } else
+          response
+            .json()
+            .then(result => alert(result.message))
+            .catch(err =>
+              alert(
+                'Nie możesz edytować komentarza dodanego przez innego użytkownika!'
+              )
+            );
       })
       .catch(error => {
         alert(error);
@@ -100,6 +107,7 @@ export const EpisodeReviewPage = props => {
                 size={32}
                 activeColor="#ffd700"
                 edit={localStorage.getItem('user') == null ? false : true}
+                value={rate}
                 onChange={value => setRate(value)}
               />
             </Form.Group>
@@ -117,7 +125,7 @@ export const EpisodeReviewPage = props => {
               controlId="formUser"
               style={{ visibility: id !== '0' ? 'visible' : 'hidden' }}
             >
-              <Form.Label>Added by: {review.userId}</Form.Label>
+              <Form.Label>Added by: {review.userName}</Form.Label>
             </Form.Group>
             <div
               style={{

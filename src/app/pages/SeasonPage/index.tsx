@@ -12,10 +12,11 @@ export function SeasonPage() {
   const { id } = useParams<{ id: string }>();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [series, setSeries] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [season, setSeason] = useState({
     id: '0',
     seriesTitle: '',
-    number: '',
+    number: 0,
     description: '',
     reviewsCount: 0,
     avgRate: 0,
@@ -23,6 +24,30 @@ export function SeasonPage() {
     reviews: [],
     episodes: [],
   });
+  const getSeason = id => {
+    let requestOptions = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + user.token,
+      },
+    };
+    fetch('https://localhost:5001/season/' + id, requestOptions)
+      .then(response => {
+        if (response.ok) {
+          response.json().then(result => {
+            setSeason(result);
+            setLoading(false);
+          });
+        } else {
+          response.json().then(result => alert(result.message));
+        }
+      })
+      .catch(error => {
+        setLoading(false);
+        alert(error);
+      });
+  };
   useEffect(() => {
     if (user.role == null) history.push('/login');
     let requestOptions = {
@@ -37,6 +62,8 @@ export function SeasonPage() {
         if (response.ok) {
           response.json().then(result => {
             setSeries(result);
+            if (id !== '0') getSeason(id);
+            else setLoading(false);
           });
         } else {
           response.json().then(result => alert(result.message));
@@ -45,21 +72,6 @@ export function SeasonPage() {
       .catch(error => {
         alert(error);
       });
-    if (id !== '0') {
-      fetch('https://localhost:5001/season/' + id, requestOptions)
-        .then(response => {
-          if (response.ok) {
-            response.json().then(result => {
-              setSeason(result);
-            });
-          } else {
-            response.json().then(result => alert(result.message));
-          }
-        })
-        .catch(error => {
-          alert(error);
-        });
-    }
   }, [history, id, user.role, user.token]);
   const deleteEpisode = id => {
     let requestOptions = {
@@ -71,30 +83,17 @@ export function SeasonPage() {
     };
     fetch('https://localhost:5001/episode?id=' + id, requestOptions)
       .then(response => {
-        if (response.ok) {
-          let requestOptions = {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: 'Bearer ' + user.token,
-            },
-          };
-          fetch('https://localhost:5001/episode/' + id, requestOptions)
-            .then(response => {
-              if (response.ok) {
-                response.json().then(result => {
-                  setSeason(result);
-                });
-              } else {
-                response.json().then(result => alert(result.message));
-              }
-            })
-            .catch(error => {
-              alert(error);
-            });
-        } else {
-          response.json().then(result => alert(result.message));
-        }
+        if (response.ok) getSeason(season.id);
+        else
+          response
+            .json()
+            .then(result =>
+              alert(
+                result.message +
+                  '\n' +
+                  'Pamiętaj, aby najpierw usunąć wszystkie recenzje odcinka!'
+              )
+            );
       })
       .catch(error => {
         alert(error);
@@ -108,32 +107,18 @@ export function SeasonPage() {
         Authorization: 'Bearer ' + user.token,
       },
     };
-    fetch('https://localhost:5001/episodeReview?id=' + id, requestOptions)
+    fetch('https://localhost:5001/seasonReview?id=' + id, requestOptions)
       .then(response => {
-        if (response.ok) {
-          let requestOptions = {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: 'Bearer ' + user.token,
-            },
-          };
-          fetch('https://localhost:5001/episode/' + id, requestOptions)
-            .then(response => {
-              if (response.ok) {
-                response.json().then(result => {
-                  setSeason(result);
-                });
-              } else {
-                response.json().then(result => alert(result.message));
-              }
-            })
-            .catch(error => {
-              alert(error);
-            });
-        } else {
-          response.json().then(result => alert(result.message));
-        }
+        if (response.ok) getSeason(season.id);
+        else
+          response
+            .json()
+            .then(result => alert(result.message))
+            .catch(err =>
+              alert(
+                'Nie możesz usunąć komentarza dodanego przez innego użytkownika!'
+              )
+            );
       })
       .catch(error => {
         alert(error);
@@ -165,13 +150,24 @@ export function SeasonPage() {
     return season.reviews.map((item, index) => {
       const { id, rate, review, userName } = item;
       return (
-        <tr key={id}>
+        <tr
+          key={id}
+          style={{ cursor: 'pointer' }}
+          onClick={() =>
+            history.push('/seasonReview/' + id, {
+              series: season.seriesTitle,
+              number: season.number,
+              seasonId: season.id,
+            })
+          }
+        >
           <td>{index + 1}</td>
           <td>{rate}</td>
           <td>{review}</td>
           <td>{userName}</td>
           <td
             style={{ visibility: user.role === 'admin' ? 'visible' : 'hidden' }}
+            onClick={event => event.stopPropagation()}
           >
             <Button text="Delete" onClick={() => deleteReview(id)} />
           </td>
@@ -195,16 +191,14 @@ export function SeasonPage() {
     fetch('https://localhost:5001/season', requestOptions)
       .then(response => {
         if (response.ok) {
-          event.target.reset();
-        } else {
-          response.json().then(result => alert(result.message));
-        }
+          if (id === '0') history.push('/seasons');
+        } else response.json().then(result => alert(result.message));
       })
       .catch(error => {
         alert(error);
       });
   };
-  return (
+  return !loading ? (
     <>
       <Helmet>
         <title>Season</title>
@@ -397,5 +391,7 @@ export function SeasonPage() {
         </div>
       </Container>
     </>
+  ) : (
+    <div></div>
   );
 }

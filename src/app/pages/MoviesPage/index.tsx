@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Container, Form, Col, Row, Table } from 'react-bootstrap';
+import { Container, Table } from 'react-bootstrap';
 import { useHistory } from 'react-router-dom';
 import Button from 'app/components/Button';
 
@@ -17,8 +17,7 @@ export function MoviesPage() {
       public reviewsCount: number
     ) {}
   }
-  useEffect(() => {
-    if (user.role == null) history.push('/login');
+  const getMovies = () => {
     let requestOptions = {
       method: 'GET',
       headers: {
@@ -39,6 +38,10 @@ export function MoviesPage() {
       .catch(error => {
         alert(error);
       });
+  };
+  useEffect(() => {
+    getMovies();
+    if (user.role == null) history.push('/login');
   }, [history, user.role, user.token]);
   const deleteMovie = id => {
     let requestOptions = {
@@ -50,30 +53,17 @@ export function MoviesPage() {
     };
     fetch('https://localhost:5001/movie?id=' + id, requestOptions)
       .then(response => {
-        if (response.ok) {
-          let requestOptions = {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: 'Bearer ' + user.token,
-            },
-          };
-          fetch('https://localhost:5001/movie', requestOptions)
-            .then(response => {
-              if (response.ok) {
-                response.json().then(result => {
-                  setMovies(result);
-                });
-              } else {
-                response.json().then(result => alert(result.message));
-              }
-            })
-            .catch(error => {
-              alert(error);
-            });
-        } else {
-          response.json().then(result => alert(result.message));
-        }
+        if (response.ok) getMovies();
+        else
+          response
+            .json()
+            .then(result =>
+              alert(
+                result.message +
+                  '\n' +
+                  'Pamiętaj, aby najpierw usunąć wszystkie recenzje filmu!'
+              )
+            );
       })
       .catch(error => {
         alert(error);

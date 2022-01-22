@@ -12,10 +12,8 @@ export function EpisodePage() {
   const { id } = useParams<{ id: string }>();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [loading, setLoading] = useState(true);
-  const [seasonId, setSeasonId] = useState('0');
-  const [series, setSeries] = useState([{ id: '1', title: '' }]);
   const [seasons, setSeasons] = useState([
-    { id: '0', seriesId: '0', number: '' },
+    { id: '0', seriesId: '0', number: '', seriesTitle: '' },
   ]);
   const [episode, setEpisode] = useState({
     id: '0',
@@ -37,11 +35,14 @@ export function EpisodePage() {
         Authorization: 'Bearer ' + user.token,
       },
     };
-    fetch('https://localhost:5001/series', requestOptions)
+    fetch('https://localhost:5001/season', requestOptions)
       .then(response => {
         if (response.ok) {
           response.json().then(result => {
-            setSeries(result);
+            setSeasons(result);
+            if (id !== '0') {
+              getEpisode(id);
+            } else setLoading(false);
           });
         } else {
           response.json().then(result => alert(result.message));
@@ -50,11 +51,20 @@ export function EpisodePage() {
       .catch(error => {
         alert(error);
       });
-    fetch('https://localhost:5001/season', requestOptions)
+  }, [history, id, user.role, user.token]);
+  const getEpisode = id => {
+    let requestOptions = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + user.token,
+      },
+    };
+    fetch('https://localhost:5001/episode/' + id, requestOptions)
       .then(response => {
         if (response.ok) {
           response.json().then(result => {
-            setSeasons(result);
+            setEpisode(result);
             setLoading(false);
           });
         } else {
@@ -62,39 +72,35 @@ export function EpisodePage() {
         }
       })
       .catch(error => {
+        setLoading(false);
         alert(error);
       });
-    if (id !== '0') {
-      fetch('https://localhost:5001/episode/' + id, requestOptions)
-        .then(response => {
-          if (response.ok) {
-            response.json().then(result => {
-              setEpisode(result);
-              setSeasonId(episode.seasonId);
-              setLoading(false);
-              console.log(result)
-            });
-          } else {
-            response.json().then(result => alert(result.message));
-          }
-        })
-        .catch(error => {
-          setLoading(false);
-          alert(error);
-        });
-    } else setLoading(false);
-  }, [history, id, user.role, user.token]);
+  };
   const renderCommentsTableData = () => {
     return episode.reviews.map((item, index) => {
       const { id, rate, review, userName } = item;
       return (
-        <tr key={id}>
+        <tr
+          key={id}
+          style={{ cursor: 'pointer' }}
+          onClick={() =>
+            history.push('/episodeReview/' + id, {
+              title: episode.title,
+              seriesTitle: seasons.find(x => x.id === episode.seasonId)
+                ?.seriesTitle,
+              seasonNumber: seasons.find(x => x.id === episode.seasonId)
+                ?.number,
+              episodeId: episode.id,
+            })
+          }
+        >
           <td>{index + 1}</td>
           <td>{rate}</td>
           <td>{review}</td>
           <td>{userName}</td>
           <td
             style={{ visibility: user.role === 'admin' ? 'visible' : 'hidden' }}
+            onClick={event => event.stopPropagation()}
           >
             <Button text="Delete" onClick={() => deleteReview(id)} />
           </td>
@@ -108,7 +114,7 @@ export function EpisodePage() {
     episode.title = event.target.elements.formTitle.value;
     episode.description = event.target.elements.formDescription.value;
     episode.seasonId = event.target.elements.formSeason.value;
-    episode.seriesId = event.target.elements.formSeries.value;
+    episode.duration = event.target.elements.formDuration.value;
     let requestOptions = {
       method: id === '0' ? 'POST' : 'PUT',
       headers: {
@@ -120,17 +126,12 @@ export function EpisodePage() {
     fetch('https://localhost:5001/episode', requestOptions)
       .then(response => {
         if (response.ok) {
-          event.target.reset();
-        } else {
-          response.json().then(result => alert(result.message));
-        }
+          if (id === '0') history.push('/episodes');
+        } else response.json().then(result => alert(result.message));
       })
       .catch(error => {
         alert(error);
       });
-  };
-  const seasonChange = event => {
-    setSeasonId(event.target.value);
   };
   const deleteReview = id => {
     let requestOptions = {
@@ -142,30 +143,16 @@ export function EpisodePage() {
     };
     fetch('https://localhost:5001/episodeReview?id=' + id, requestOptions)
       .then(response => {
-        if (response.ok) {
-          let requestOptions = {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: 'Bearer ' + user.token,
-            },
-          };
-          fetch('https://localhost:5001/episode/' + episode.id, requestOptions)
-            .then(response => {
-              if (response.ok) {
-                response.json().then(result => {
-                  setEpisode(result);
-                });
-              } else {
-                response.json().then(result => alert(result.message));
-              }
-            })
-            .catch(error => {
-              alert(error);
-            });
-        } else {
-          response.json().then(result => alert(result.message));
-        }
+        if (response.ok) getEpisode(episode.id);
+        else
+          response
+            .json()
+            .then(result => alert(result.message))
+            .catch(err =>
+              alert(
+                'Nie możesz usunąć komentarza dodanego przez innego użytkownika!'
+              )
+            );
       })
       .catch(error => {
         alert(error);
@@ -204,38 +191,25 @@ export function EpisodePage() {
                 />
               </Col>
             </Form.Group>
-            <Form.Group as={Row} className="mb-3" controlId="formSeries">
-              <Form.Label column sm="2">
-                Series
-              </Form.Label>
-              <Col sm="8">
-                <Form.Select
-                  defaultValue={episode.seriesId}
-                  disabled={user.role !== 'admin' ? true : false}
-                >
-                  {series.map((item, index) => {
-                    const { id, title } = item;
-                    return <option key={id} value={id} label={title} />;
-                  })}
-                </Form.Select>
-              </Col>
-            </Form.Group>
             <Form.Group as={Row} className="mb-3" controlId="formSeason">
               <Form.Label column sm="2">
-                Season
+                Series - Season
               </Form.Label>
               <Col sm="8">
                 <Form.Select
-                  value={seasonId}
+                  defaultValue={episode.seasonId}
                   disabled={user.role !== 'admin' ? true : false}
-                  onChange={seasonChange}
                 >
-                  {seasons
-                    .filter(season => season.seriesId === episode.seriesId)
-                    .map((item, index) => {
-                      const { id, number } = item;
-                      return <option key={id} value={id} label={number} />;
-                    })}
+                  {seasons.map((item, index) => {
+                    const { id, number, seriesTitle } = item;
+                    return (
+                      <option
+                        key={id}
+                        value={id}
+                        label={seriesTitle + ' Season ' + number}
+                      />
+                    );
+                  })}
                 </Form.Select>
               </Col>
             </Form.Group>
@@ -356,8 +330,8 @@ export function EpisodePage() {
               onClick={() =>
                 history.push('/episodeReview/0', {
                   title: episode.title,
-                  seriesTitle: series.find(x => x.id === episode.seriesId)
-                    ?.title,
+                  seriesTitle: seasons.find(x => x.id === episode.seasonId)
+                    ?.seriesTitle,
                   seasonNumber: seasons.find(x => x.id === episode.seasonId)
                     ?.number,
                   episodeId: episode.id,

@@ -24,6 +24,7 @@ export const MovieReviewPage = props => {
     review: '',
     userId: '',
     movieId: '',
+    userName: '',
   });
   useEffect(() => {
     if (user.role == null) history.push('/login');
@@ -59,7 +60,6 @@ export const MovieReviewPage = props => {
     review.rate = rate;
     review.review = event.target.elements.formReview.value;
     review.movieId = props.location.state.movieId;
-    review.userId = 'b97dbd7e-09ac-4215-af68-81b04f8c2f64';
     let requestOptions = {
       method: id === '0' ? 'POST' : 'PUT',
       headers: {
@@ -71,8 +71,16 @@ export const MovieReviewPage = props => {
     fetch('https://localhost:5001/movieReview', requestOptions)
       .then(response => {
         if (response.ok) {
-          event.target.reset();
-        }
+          if (id === '0') history.push('/movie/' + review.movieId);
+        } else
+          response
+            .json()
+            .then(result => alert(result.message))
+            .catch(err =>
+              alert(
+                'Nie możesz edytować komentarza dodanego przez innego użytkownika!'
+              )
+            );
       })
       .catch(error => {
         alert(error);
@@ -114,7 +122,7 @@ export const MovieReviewPage = props => {
               controlId="formUser"
               style={{ visibility: id !== '0' ? 'visible' : 'hidden' }}
             >
-              <Form.Label>Added by: {review.userId}</Form.Label>
+              <Form.Label>Added by: {review.userName}</Form.Label>
             </Form.Group>
             <div
               style={{

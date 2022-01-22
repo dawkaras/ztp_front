@@ -24,6 +24,7 @@ export const SeasonReviewPage = props => {
     review: '',
     userId: '',
     seasonId: '',
+    userName: '',
   });
   useEffect(() => {
     if (user.role == null) history.push('/login');
@@ -59,7 +60,6 @@ export const SeasonReviewPage = props => {
     review.rate = rate;
     review.review = event.target.elements.formReview.value;
     review.seasonId = props.location.state.seasonId;
-    review.userId = 'b97dbd7e-09ac-4215-af68-81b04f8c2f64';
     let requestOptions = {
       method: id === '0' ? 'POST' : 'PUT',
       headers: {
@@ -71,10 +71,16 @@ export const SeasonReviewPage = props => {
     fetch('https://localhost:5001/seasonReview', requestOptions)
       .then(response => {
         if (response.ok) {
-          event.target.reset();
-        } else {
-          response.json().then(result => alert(result.message));
-        }
+          if (id === '0') history.push('/season/' + review.seasonId);
+        } else
+          response
+            .json()
+            .then(result => alert(result.message))
+            .catch(err =>
+              alert(
+                'Nie możesz edytować komentarza dodanego przez innego użytkownika!'
+              )
+            );
       })
       .catch(error => {
         alert(error);
@@ -100,6 +106,7 @@ export const SeasonReviewPage = props => {
                 size={32}
                 activeColor="#ffd700"
                 edit={localStorage.getItem('user') == null ? false : true}
+                value={rate}
                 onChange={value => setRate(value)}
               />
             </Form.Group>
@@ -117,7 +124,7 @@ export const SeasonReviewPage = props => {
               controlId="formUser"
               style={{ visibility: id !== '0' ? 'visible' : 'hidden' }}
             >
-              <Form.Label>Added by: {review.userId}</Form.Label>
+              <Form.Label>Added by: {review.userName}</Form.Label>
             </Form.Group>
             <div
               style={{

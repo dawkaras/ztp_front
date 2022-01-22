@@ -24,6 +24,30 @@ export function SingleSeriesPage() {
     seasons: [],
     genreId: '2',
   });
+  const getSeries = id => {
+    let requestOptions = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + user.token,
+      },
+    };
+    fetch('https://localhost:5001/series/' + id, requestOptions)
+      .then(response => {
+        if (response.ok) {
+          response.json().then(result => {
+            setSeries(result);
+            setLoading(false);
+          });
+        } else {
+          response.json().then(result => alert(result.message));
+        }
+      })
+      .catch(error => {
+        setLoading(false);
+        alert(error);
+      });
+  };
   useEffect(() => {
     if (user.role == null) history.push('/login');
     let requestOptions = {
@@ -46,23 +70,8 @@ export function SingleSeriesPage() {
       .catch(error => {
         alert(error);
       });
-    if (id !== '0') {
-      fetch('https://localhost:5001/series/' + id, requestOptions)
-        .then(response => {
-          if (response.ok) {
-            response.json().then(result => {
-              setSeries(result);
-              setLoading(false);
-            });
-          } else {
-            response.json().then(result => alert(result.message));
-          }
-        })
-        .catch(error => {
-          setLoading(false);
-          alert(error);
-        });
-    } else setLoading(false);
+    if (id !== '0') getSeries(id);
+    else setLoading(false);
   }, [history, id, user.role, user.token]);
   const renderTableData = () => {
     return series.seasons.map((season, index) => {
@@ -95,7 +104,12 @@ export function SingleSeriesPage() {
         <tr
           key={id}
           style={{ cursor: 'pointer' }}
-          onClick={() => history.push('/seriesReview/' + id)}
+          onClick={() =>
+            history.push('/seriesReview/' + id, {
+              title: series.title,
+              seriesId: series.id,
+            })
+          }
         >
           <td>{index + 1}</td>
           <td>{rate}</td>
@@ -126,18 +140,13 @@ export function SingleSeriesPage() {
       },
       body: JSON.stringify(series),
     };
-    setLoading(true);
     fetch('https://localhost:5001/series', requestOptions)
       .then(response => {
         if (response.ok) {
-          event.target.reset();
-          setLoading(false);
-        } else {
-          response.json().then(result => alert(result.message));
-        }
+          if (id === '0') history.push('/series');
+        } else response.json().then(result => alert(result.message));
       })
       .catch(error => {
-        setLoading(false);
         alert(error);
       });
   };
@@ -151,30 +160,17 @@ export function SingleSeriesPage() {
     };
     fetch('https://localhost:5001/season?id=' + id, requestOptions)
       .then(response => {
-        if (response.ok) {
-          let requestOptions = {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: 'Bearer ' + user.token,
-            },
-          };
-          fetch('https://localhost:5001/series/' + id, requestOptions)
-            .then(response => {
-              if (response.ok) {
-                response.json().then(result => {
-                  setSeries(result);
-                });
-              } else {
-                response.json().then(result => alert(result.message));
-              }
-            })
-            .catch(error => {
-              alert(error);
-            });
-        } else {
-          response.json().then(result => alert(result.message));
-        }
+        if (response.ok) getSeries(series.id);
+        else
+          response
+            .json()
+            .then(result =>
+              alert(
+                result.message +
+                  '\n' +
+                  'Pamiętaj, aby najpierw usunąć wszystkie recenzje sezonu oraz wszystkie odcinki!'
+              )
+            );
       })
       .catch(error => {
         alert(error);
@@ -188,32 +184,18 @@ export function SingleSeriesPage() {
         Authorization: 'Bearer ' + user.token,
       },
     };
-    fetch('https://localhost:5001/seasonReview?id=' + id, requestOptions)
+    fetch('https://localhost:5001/seriesReview?id=' + id, requestOptions)
       .then(response => {
-        if (response.ok) {
-          let requestOptions = {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: 'Bearer ' + user.token,
-            },
-          };
-          fetch('https://localhost:5001/series/' + id, requestOptions)
-            .then(response => {
-              if (response.ok) {
-                response.json().then(result => {
-                  setSeries(result);
-                });
-              } else {
-                response.json().then(result => alert(result.message));
-              }
-            })
-            .catch(error => {
-              alert(error);
-            });
-        } else {
-          response.json().then(result => alert(result.message));
-        }
+        if (response.ok) getSeries(series.id);
+        else
+          response
+            .json()
+            .then(result => alert(result.message))
+            .catch(err =>
+              alert(
+                'Nie możesz usunąć komentarza dodanego przez innego użytkownika!'
+              )
+            );
       })
       .catch(error => {
         alert(error);
